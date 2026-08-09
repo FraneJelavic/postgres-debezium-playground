@@ -36,6 +36,16 @@ topology_ready() {
   [[ $primary_count -eq 1 && $replica_count -eq 2 ]]
 }
 
+patronictl_topology_ready() {
+  local topology
+  topology=$(compose exec -T postgres1 patronictl list --format json 2>/dev/null) || return 1
+  jq -e '
+    length == 3
+    and ([.[] | select(.Role == "Leader" and .State == "running")] | length == 1)
+    and ([.[] | select(.Role == "Replica" and .State == "streaming")] | length == 2)
+  ' <<<"$topology" >/dev/null
+}
+
 two_streaming_replicas() {
   [[ $(sql_via_haproxy -Atc "SELECT count(*) FROM pg_stat_replication WHERE state = 'streaming';" 2>/dev/null) == 2 ]]
 }
@@ -128,6 +138,7 @@ printf 'Starting the full stack...\n'
 compose up --detach --wait --wait-timeout 240
 wait_for_initializers 180 database-init connector-init
 wait_until 60 'one primary and two replicas' topology_ready
+wait_until 60 'bare patronictl topology command' patronictl_topology_ready
 wait_until 60 'two streaming replicas' two_streaming_replicas
 
 compose exec -T etcd1 etcdctl \

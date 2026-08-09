@@ -5,6 +5,7 @@ USER root
 ENV PATH="/opt/patroni-venv/bin:${PATH}" \
     PGDATA=/var/lib/postgresql/data/pgdata \
     PATRONI_CONFIG_FILE=/etc/patroni/patroni.yml \
+    PATRONICTL_CONFIG_FILE=/etc/patroni/patroni.yml \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
