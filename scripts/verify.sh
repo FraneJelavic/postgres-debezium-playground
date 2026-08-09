@@ -92,12 +92,12 @@ insert_event() {
 consume_topic() {
   # The broker uses the interpreter-only JVM under x86_64 Colima/Rosetta.
   # Allow the one-shot consumer enough time to start and flush its output.
-  compose exec -T kafka timeout 60 /opt/kafka/bin/kafka-console-consumer.sh \
+  compose exec -T kafka timeout "$kafka_cli_timeout_seconds" /opt/kafka/bin/kafka-console-consumer.sh \
     --bootstrap-server kafka:29092 \
     --topic playground.events.orders \
     --partition 0 \
     --offset earliest \
-    --timeout-ms 6000 \
+    --timeout-ms 30000 \
     --property print.key=true \
     --property print.headers=true \
     --property print.value=true 2>/dev/null || true
