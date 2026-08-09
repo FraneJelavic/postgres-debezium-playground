@@ -133,7 +133,7 @@ wait_until 60 'two streaming replicas' two_streaming_replicas
 compose exec -T etcd1 etcdctl \
   --endpoints=http://etcd1:2379,http://etcd2:2379,http://etcd3:2379 \
   endpoint health --cluster >/dev/null
-compose exec -T kafka timeout 30 /opt/kafka/bin/kafka-topics.sh \
+compose exec -T kafka timeout "$kafka_cli_timeout_seconds" /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server kafka:29092 --list >/dev/null
 
 wal_level=$(sql_via_haproxy -Atc 'SHOW wal_level;')

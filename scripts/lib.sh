@@ -2,6 +2,9 @@
 
 root_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 credentials_file="$root_dir/.state/credentials.env"
+# Kafka's Java CLI can take well over 30 seconds to start under Colima's
+# x86_64/Rosetta compatibility path even after the broker is healthy.
+kafka_cli_timeout_seconds=90
 
 load_credentials() {
   local requested_project_name=${COMPOSE_PROJECT_NAME-}
@@ -148,7 +151,7 @@ diagnostics() {
     --endpoints=http://etcd1:2379,http://etcd2:2379,http://etcd3:2379 \
     endpoint health --cluster >&2 || true
   printf '\n=== Kafka topics ===\n' >&2
-  compose exec -T kafka timeout 20 /opt/kafka/bin/kafka-topics.sh \
+  compose exec -T kafka timeout "$kafka_cli_timeout_seconds" /opt/kafka/bin/kafka-topics.sh \
     --bootstrap-server kafka:29092 --list >&2 || true
   printf '\n=== Connector status ===\n' >&2
   curl --silent "http://127.0.0.1:${CONNECT_HOST_PORT:-8083}/connectors/playground-outbox-connector/status" >&2 || true

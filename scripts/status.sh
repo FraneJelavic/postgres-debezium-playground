@@ -28,7 +28,7 @@ printf '\n=== HAProxy write endpoint ===\n'
 sql_via_haproxy --tuples-only --no-align --command 'SELECT current_database(), pg_is_in_recovery();'
 
 printf '\n=== Kafka topics ===\n'
-compose exec -T kafka timeout 30 /opt/kafka/bin/kafka-topics.sh \
+compose exec -T kafka timeout "$kafka_cli_timeout_seconds" /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server kafka:29092 --list
 
 printf '\n=== Connector ===\n'
