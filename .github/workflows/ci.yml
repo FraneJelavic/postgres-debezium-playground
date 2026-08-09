@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install linters
+        run: sudo apt-get update && sudo apt-get install -y jq shellcheck yamllint
+      - name: Generate local credentials
+        run: make init
+      - name: Repository checks
+        run: make check
+      - name: Diagram freshness
+        run: make check-diagrams
+      - name: YAML validation
+        run: >-
+          yamllint -d '{extends: relaxed, rules: {line-length: disable}}'
+          compose.yaml .github
+      - name: Dockerfile validation
+        uses: hadolint/hadolint-action@v3
+        with:
+          dockerfile: images/postgres-patroni/Dockerfile
+      - name: Workflow validation
+        uses: raven-actions/actionlint@v2
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  integration-amd64:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Isolate Compose project
+        run: |
+          make init
+          sed -i "s/^COMPOSE_PROJECT_NAME=.*/COMPOSE_PROJECT_NAME=playground-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}/" .state/credentials.env
+      - name: Full runtime verification
+        run: make verify
+      - name: Capture diagnostics
+        if: failure()
+        run: |
+          ./scripts/compose.sh ps --all > compose-ps.txt || true
+          ./scripts/compose.sh logs --no-color > compose-logs.txt || true
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics-amd64
+          path: compose-*.txt
+      - name: Vulnerability scan
+        uses: aquasecurity/trivy-action@v0.33.1
+        with:
+          image-ref: postgres-debezium-playground/postgres-patroni:local
+          format: table
+          exit-code: "1"
+          severity: CRITICAL,HIGH
+      - name: Cleanup isolated project
+        if: always()
+        run: CONFIRM_RESET=YES ./scripts/reset.sh || true
+
+  build-platforms:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        platform: [linux/amd64, linux/arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Build PostgreSQL/Patroni image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: images/postgres-patroni/Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: false
+          provenance: true
+          sbom: true

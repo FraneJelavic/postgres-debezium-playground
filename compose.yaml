@@ -1,0 +1,264 @@
+x-etcd-image: &etcd-image quay.io/coreos/etcd:v3.5.33@sha256:d367cba7801b29d2f7481bb56802894658ec8a647834509118c81f77f721381b
+x-postgres-image: &postgres-image postgres:16.14-bookworm@sha256:64154d0babcb1741988719e703419af0382b19953706149f9872fbd0f438efa8
+x-haproxy-image: &haproxy-image haproxy:3.2.22-alpine@sha256:79799e8b2977e60802774fa53d29e6b54e045402cdd8a8b9fe43923e7095a047
+x-kafka-image: &kafka-image apache/kafka:4.3.1@sha256:77e3df9054047a88b520d0cc46e16696d3b22022e1d580aeccd2632df6532837
+x-connect-image: &connect-image quay.io/debezium/connect:3.6.1@sha256:624de53c4da93aa2f845483449c7c26d0ed1f816eac06f2f476f79b3ab50abb5
+
+x-etcd-common: &etcd-common
+  image: *etcd-image
+  restart: unless-stopped
+  networks: [playground]
+  environment:
+    ETCDCTL_API: "3"
+  healthcheck:
+    test: ["CMD", "etcdctl", "--endpoints=http://127.0.0.1:2379", "endpoint", "health"]
+    interval: 5s
+    timeout: 4s
+    retries: 20
+    start_period: 10s
+
+x-postgres-environment: &postgres-environment
+  PATRONI_SCOPE: postgres-debezium-playground
+  PATRONI_SUPERUSER_USERNAME: postgres
+  PATRONI_SUPERUSER_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?run make init}
+  PATRONI_REPLICATION_USERNAME: replicator
+  PATRONI_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:?run make init}
+  PATRONI_REWIND_USERNAME: rewind
+  PATRONI_REWIND_PASSWORD: ${POSTGRES_REWIND_PASSWORD:?run make init}
+
+x-postgres-common: &postgres-common
+  image: postgres-debezium-playground/postgres-patroni:local
+  build:
+    context: .
+    dockerfile: images/postgres-patroni/Dockerfile
+  restart: unless-stopped
+  networks: [playground]
+  depends_on:
+    etcd1:
+      condition: service_healthy
+    etcd2:
+      condition: service_healthy
+    etcd3:
+      condition: service_healthy
+  healthcheck:
+    test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8008/health >/dev/null && pg_isready -q -h 127.0.0.1 -U postgres"]
+    interval: 5s
+    timeout: 4s
+    retries: 30
+    start_period: 30s
+
+services:
+  etcd1:
+    <<: *etcd-common
+    command:
+      - etcd
+      - --name=etcd1
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://etcd1:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-advertise-peer-urls=http://etcd1:2380
+      - --initial-cluster=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      - --initial-cluster-state=new
+      - --initial-cluster-token=postgres-debezium-playground
+    volumes:
+      - etcd1-data:/etcd-data
+
+  etcd2:
+    <<: *etcd-common
+    command:
+      - etcd
+      - --name=etcd2
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://etcd2:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-advertise-peer-urls=http://etcd2:2380
+      - --initial-cluster=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      - --initial-cluster-state=new
+      - --initial-cluster-token=postgres-debezium-playground
+    volumes:
+      - etcd2-data:/etcd-data
+
+  etcd3:
+    <<: *etcd-common
+    command:
+      - etcd
+      - --name=etcd3
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://etcd3:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-advertise-peer-urls=http://etcd3:2380
+      - --initial-cluster=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      - --initial-cluster-state=new
+      - --initial-cluster-token=postgres-debezium-playground
+    volumes:
+      - etcd3-data:/etcd-data
+
+  postgres1:
+    <<: *postgres-common
+    environment:
+      <<: *postgres-environment
+      PATRONI_NAME: postgres1
+      PATRONI_POSTGRESQL_CONNECT_ADDRESS: postgres1:5432
+      PATRONI_RESTAPI_CONNECT_ADDRESS: postgres1:8008
+    ports:
+      - "127.0.0.1:${PATRONI1_HOST_PORT:-8008}:8008"
+    volumes:
+      - postgres1-data:/var/lib/postgresql/data
+
+  postgres2:
+    <<: *postgres-common
+    environment:
+      <<: *postgres-environment
+      PATRONI_NAME: postgres2
+      PATRONI_POSTGRESQL_CONNECT_ADDRESS: postgres2:5432
+      PATRONI_RESTAPI_CONNECT_ADDRESS: postgres2:8008
+    ports:
+      - "127.0.0.1:${PATRONI2_HOST_PORT:-8009}:8008"
+    volumes:
+      - postgres2-data:/var/lib/postgresql/data
+
+  postgres3:
+    <<: *postgres-common
+    environment:
+      <<: *postgres-environment
+      PATRONI_NAME: postgres3
+      PATRONI_POSTGRESQL_CONNECT_ADDRESS: postgres3:5432
+      PATRONI_RESTAPI_CONNECT_ADDRESS: postgres3:8008
+    ports:
+      - "127.0.0.1:${PATRONI3_HOST_PORT:-8010}:8008"
+    volumes:
+      - postgres3-data:/var/lib/postgresql/data
+
+  haproxy:
+    image: *haproxy-image
+    restart: unless-stopped
+    networks: [playground]
+    depends_on:
+      postgres1:
+        condition: service_healthy
+      postgres2:
+        condition: service_healthy
+      postgres3:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - ./config/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- 'http://127.0.0.1:7000/stats;csv' | awk -F, '$$1 == \"postgres_primary\" && $$2 ~ /^postgres/ && $$18 == \"UP\" { found=1 } END { exit !found }'"]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+      start_period: 10s
+
+  kafka:
+    image: *kafka-image
+    restart: unless-stopped
+    networks: [playground]
+    ports:
+      - "127.0.0.1:${KAFKA_HOST_PORT:-9092}:9092"
+    environment:
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_OPTS: -Xint
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: CONTROLLER://:29093,INTERNAL://:29092,EXTERNAL://:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:${KAFKA_HOST_PORT:-9092}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_NUM_PARTITIONS: "1"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/29092'"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  connect:
+    image: *connect-image
+    restart: unless-stopped
+    networks: [playground]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${CONNECT_HOST_PORT:-8083}:8083"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_OPTS: -Xint
+      # Avoid Kafka Connect's legacy reflective scan, which is prohibitively
+      # slow when the JVM interpreter is used for x86_64 Colima/Rosetta safety.
+      CONNECT_PLUGIN_DISCOVERY: service_load
+      GROUP_ID: playground-connect
+      CONFIG_STORAGE_TOPIC: playground_connect_configs
+      OFFSET_STORAGE_TOPIC: playground_connect_offsets
+      STATUS_STORAGE_TOPIC: playground_connect_statuses
+      CONFIG_STORAGE_REPLICATION_FACTOR: "1"
+      OFFSET_STORAGE_REPLICATION_FACTOR: "1"
+      STATUS_STORAGE_REPLICATION_FACTOR: "1"
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8083/connectors >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  database-init:
+    image: *postgres-image
+    restart: "no"
+    networks: [playground]
+    depends_on:
+      haproxy:
+        condition: service_healthy
+    environment:
+      POSTGRES_SUPERUSER_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?run make init}
+      DEBEZIUM_PASSWORD: ${DEBEZIUM_PASSWORD:?run make init}
+    entrypoint: ["/bin/bash", "/scripts/init-database.sh"]
+    volumes:
+      - ./scripts/init-database.sh:/scripts/init-database.sh:ro
+      - ./init/sql:/init/sql:ro
+
+  connector-init:
+    image: *connect-image
+    restart: "no"
+    networks: [playground]
+    depends_on:
+      connect:
+        condition: service_healthy
+      database-init:
+        condition: service_completed_successfully
+    environment:
+      DEBEZIUM_PASSWORD: ${DEBEZIUM_PASSWORD:?run make init}
+    entrypoint: ["/bin/bash", "/scripts/register-connector.sh"]
+    volumes:
+      - ./scripts/register-connector.sh:/scripts/register-connector.sh:ro
+      - ./config/debezium:/config/debezium:ro
+
+networks:
+  playground:
+    driver: bridge
+
+volumes:
+  etcd1-data:
+  etcd2-data:
+  etcd3-data:
+  postgres1-data:
+  postgres2-data:
+  postgres3-data:
+  kafka-data:

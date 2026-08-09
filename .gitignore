@@ -1,0 +1,11 @@
+.state/
+.env
+.venv/
+*.log
+.DS_Store
+.idea/
+.vscode/
+coverage/
+dist/
+build/
+docs/c4/.rendered/

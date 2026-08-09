@@ -1,0 +1,12 @@
+.git
+.github
+.state
+.env
+.venv
+*.log
+*.key
+*.pem
+*.crt
+docs
+plans
+README.md
