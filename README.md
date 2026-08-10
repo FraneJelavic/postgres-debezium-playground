@@ -12,12 +12,31 @@ PostgreSQL and etcd have redundant processes, but every process still shares one
 
 The playground is one local software system supplied by public upstream images and operated through `make` targets and loopback-only endpoints. See [the architecture guide](docs/architecture.md) for the detailed container view.
 
+## Platform support
+
+The primary setup is a Linux host running Docker Engine and the Docker Compose v2 plugin. The playground itself has no macOS dependency; macOS and Colima are optional ways to provide a compatible Docker runtime.
+
+Host prerequisites are Docker Engine 27 or newer, Docker Compose 2.30 or newer, `bash`, `curl`, `jq`, `openssl`, and `make`. The static checks additionally require `rg` and ShellCheck. Commands use `docker compose`; the legacy Compose v1 `docker-compose` command is not supported.
+
 ## Quick start
 
-Allocate at least 4 CPUs, 8 GiB RAM, and 30 GiB disk. On macOS:
+On Linux, ensure the Docker daemon is running and accessible to your user, then run:
+
+```sh
+docker version
+docker compose version
+make init
+make up
+make status
+make verify
+```
+
+On macOS, Colima can provide the Docker runtime. Allocate at least 4 CPUs, 8 GiB RAM, and 30 GiB disk, then use the same `make` commands:
 
 ```sh
 colima start --cpu 4 --memory 8 --disk 30
+docker version
+docker compose version
 make init
 make up
 make status
