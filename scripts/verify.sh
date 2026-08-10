@@ -113,7 +113,6 @@ consume_topic() {
     --offset earliest \
     --timeout-ms 30000 \
     --property print.key=true \
-    --property print.headers=true \
     --property print.value=true 2>/dev/null || true
 }
 
