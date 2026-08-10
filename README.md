@@ -16,7 +16,7 @@ The playground is one local software system supplied by public upstream images a
 
 The primary setup is a Linux host running Docker Engine and the Docker Compose v2 plugin. The playground itself has no macOS dependency; macOS and Colima are optional ways to provide a compatible Docker runtime.
 
-Host prerequisites are Docker Engine 27 or newer, Docker Compose 2.30 or newer, `bash`, `curl`, `jq`, `openssl`, and `make`. The static checks additionally require `rg` and ShellCheck. Commands use `docker compose`; the legacy Compose v1 `docker-compose` command is not supported.
+Host prerequisites are Docker Engine 27 or newer, Docker Compose 2.30 or newer, `bash`, `curl`, `jq`, `openssl`, and `make`. The static checks additionally require Git, `grep`, and ShellCheck. Commands use `docker compose`; the legacy Compose v1 `docker-compose` command is not supported.
 
 ## Quick start
 

@@ -5,7 +5,20 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=scripts/lib.sh
 source "$script_dir/lib.sh"
 load_credentials
-require_commands docker jq rg shellcheck bash
+require_commands bash docker git grep jq shellcheck
+
+scan_repository() {
+  local pattern=$1 file status matched=1
+  while IFS= read -r -d '' file; do
+    if grep -nHIE "$pattern" "$root_dir/$file"; then
+      matched=0
+    else
+      status=$?
+      (( status == 1 )) || return "$status"
+    fi
+  done < <(git -C "$root_dir" ls-files --cached --others --exclude-standard -z)
+  return "$matched"
+}
 
 find "${root_dir}/scripts" -type f -name '*.sh' -print0 \
   | while IFS= read -r -d '' script; do bash -n "$script"; done
@@ -14,14 +27,14 @@ shellcheck "${root_dir}"/scripts/*.sh "${root_dir}"/images/postgres-patroni/entr
 jq empty "${root_dir}"/config/debezium/connector.template.json
 compose config --quiet
 
-if rg -n --hidden --glob '!.git/**' --glob '!.state/**' \
-  'BEGIN (RSA|OPENSSH|EC|DSA) PRIVATE KEY|AKIA[0-9A-Z]{16}' "${root_dir}"; then
+if scan_repository \
+  'BEGIN (RSA|OPENSSH|EC|DSA) PRIVATE KEY|AKIA[0-9A-Z]{16}'; then
   printf 'Potential secret material found.\n' >&2
   exit 1
 fi
 
-if rg -n --hidden --glob '!.git/**' --glob '!.state/**' \
-  'docker\.ib-ci\.com|git\.ib-ci\.com|confluence\.infobip\.com|jira\.infobip\.com|serena\.infobip\.com' "${root_dir}"; then
+if scan_repository \
+  'docker\.ib-ci\.com|git\.ib-ci\.com|confluence\.infobip\.com|jira\.infobip\.com|serena\.infobip\.com'; then
   printf 'A prohibited private marker was found.\n' >&2
   exit 1
 fi
