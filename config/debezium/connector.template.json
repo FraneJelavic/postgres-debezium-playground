@@ -30,6 +30,5 @@
     "transforms.outbox.table.field.event.type": "event_type",
     "transforms.outbox.table.field.event.payload": "payload",
     "transforms.outbox.route.by.field": "aggregate_type",
-    "transforms.outbox.route.topic.replacement": "playground.events.${routedByValue}",
-    "transforms.outbox.table.fields.additional.placement": "correlation_id:header:correlation_id,created_at:header:event_created_at"
+    "transforms.outbox.route.topic.replacement": "playground.events.${routedByValue}"
 }

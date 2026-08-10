@@ -6,7 +6,7 @@
 4. The built-in Outbox Event Router emits `playground.events.<aggregate_type>`.
 5. Kafka stores the record in the single KRaft broker.
 
-The record key is `aggregate_id`. The value is `payload`. Headers contain the outbox event UUID, `correlation_id`, and creation time. Verification searches both value and headers using a unique caller-supplied correlation ID.
+The record key is `aggregate_id`. The value is `payload`. Verification searches the value for a unique caller-supplied correlation ID.
 
 The heartbeat action updates `app.debezium_heartbeat` every ten seconds during idle periods, allowing the connector to advance the logical slot and limiting avoidable WAL retention.
 

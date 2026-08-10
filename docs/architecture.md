@@ -39,4 +39,4 @@ Debezium reaches PostgreSQL through HAProxy, reads `playground_publication` with
 - Connector: `playground-outbox-connector`
 - Topic namespace: `playground`
 
-Outbox rows contain `id`, `correlation_id`, `aggregate_type`, `aggregate_id`, `event_type`, `payload`, and `created_at`. The Kafka record key is `aggregate_id`; the event UUID and caller-supplied correlation UUID are headers; the value is the JSON payload. Topics are `playground.events.<aggregate_type>`.
+Outbox rows contain `id`, `correlation_id`, `aggregate_type`, `aggregate_id`, `event_type`, `payload`, and `created_at`. The Kafka record key is `aggregate_id`; the value is the JSON payload. Topics are `playground.events.<aggregate_type>`.

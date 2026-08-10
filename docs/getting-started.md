@@ -33,7 +33,7 @@ VALUES
    'orders', 'order-42', 'ORDER_CREATED', '{"order_id":"order-42"}');
 ```
 
-Consume `playground.events.orders` from `127.0.0.1:9092`. The Kafka key is the aggregate ID; the record headers include the event and correlation IDs.
+Consume `playground.events.orders` from `127.0.0.1:9092`. The Kafka key is the aggregate ID; the value is the JSON payload.
 
 ## Stop and reset
 
