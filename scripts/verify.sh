@@ -47,7 +47,11 @@ patronictl_topology_ready() {
 }
 
 two_streaming_replicas() {
-  [[ $(sql_via_haproxy -Atc "SELECT count(*) FROM pg_stat_replication WHERE state = 'streaming';" 2>/dev/null) == 2 ]]
+  [[ $(sql_via_haproxy -Atc \
+    "SELECT count(*) FROM pg_stat_replication
+     WHERE state = 'streaming'
+       AND application_name IN ('postgres1', 'postgres2', 'postgres3');" \
+    2>/dev/null) == 2 ]]
 }
 
 logical_slot_active() {
