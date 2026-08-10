@@ -27,7 +27,7 @@ jobs:
           yamllint -d '{extends: relaxed, rules: {line-length: disable}}'
           compose.yaml .github
       - name: Dockerfile validation
-        uses: hadolint/hadolint-action@v3
+        uses: hadolint/hadolint-action@v3.4.0
         with:
           dockerfile: images/postgres-patroni/Dockerfile
       - name: Workflow validation

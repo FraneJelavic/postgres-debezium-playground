@@ -6,14 +6,14 @@ This repository is an independently authored, clean-history implementation based
 
 | Component | Source used | License | Selection and integrity policy |
 |---|---|---|---|
-| PostgreSQL | https://www.postgresql.org/docs/16/ and Docker Official Image | PostgreSQL License | PostgreSQL 16 Bookworm patch releases; tag and multi-platform digest are recorded in `docs/compatibility.md`. |
+| PostgreSQL | https://www.postgresql.org/docs/16/ and Docker Official Image | PostgreSQL License | PostgreSQL 16 Bookworm patch releases selected by explicit version tag. |
 | Patroni | https://patroni.readthedocs.io/ and https://github.com/patroni/patroni | MIT | Exact PyPI version with all transitive Python distributions pinned and hashed. |
-| etcd | https://etcd.io/docs/ and `quay.io/coreos/etcd` | Apache-2.0 | Latest selected 3.5 patch release, pinned by multi-platform digest. |
-| HAProxy | https://docs.haproxy.org/ | GPL-2.0-or-later with linking exception | Stable branch patch release, pinned by multi-platform digest. |
-| Apache Kafka | https://kafka.apache.org/documentation/ and `apache/kafka` | Apache-2.0 | Stable KRaft release, pinned by multi-platform digest. |
-| Debezium | https://debezium.io/documentation/reference/3.6/ | Apache-2.0 | Stable Connect release, pinned by multi-platform digest. |
+| etcd | https://etcd.io/docs/ and `quay.io/coreos/etcd` | Apache-2.0 | Selected 3.5 patch release identified by explicit version tag. |
+| HAProxy | https://docs.haproxy.org/ | GPL-2.0-or-later with linking exception | Stable branch patch release identified by explicit version tag. |
+| Apache Kafka | https://kafka.apache.org/documentation/ and `apache/kafka` | Apache-2.0 | Stable KRaft release identified by explicit version tag. |
+| Debezium | https://debezium.io/documentation/reference/3.6/ | Apache-2.0 | Stable Connect release identified by explicit version tag. |
 | Docker Compose | https://docs.docker.com/compose/ | Apache-2.0 | Compose v2 plugin; minimum version documented in the compatibility matrix. |
-| C4/Structurizr | https://docs.structurizr.com/dsl | Apache-2.0 | Editable DSL is repository-authored; Structurizr CLI 2025.11.09 and PlantUML 1.2026.6 are digest-pinned rendering tools. |
+| C4/Structurizr | https://docs.structurizr.com/dsl | Apache-2.0 | Editable DSL is repository-authored; rendering tools use explicit version tags. |
 
 No file in this repository was copied from the private behavioral reference. The public design uses generic identifiers and upstream configuration contracts.
 

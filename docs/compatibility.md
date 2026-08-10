@@ -1,17 +1,17 @@
 # Compatibility Matrix
 
-Validated selections as of 2026-08-08:
+Validated selections as of 2026-08-10:
 
-| Component | Readable version | Immutable multi-platform digest | amd64 | arm64 |
-|---|---|---|:---:|:---:|
-| PostgreSQL base/client | `postgres:16.14-bookworm` | `sha256:64154d0babcb1741988719e703419af0382b19953706149f9872fbd0f438efa8` | yes | yes |
-| Patroni | `4.1.4` | PyPI distributions pinned by SHA-256 in `requirements.txt` | yes | yes |
-| etcd | `quay.io/coreos/etcd:v3.5.33` | `sha256:d367cba7801b29d2f7481bb56802894658ec8a647834509118c81f77f721381b` | yes | yes |
-| HAProxy | `haproxy:3.2.22-alpine` | `sha256:79799e8b2977e60802774fa53d29e6b54e045402cdd8a8b9fe43923e7095a047` | yes | yes |
-| Apache Kafka | `apache/kafka:4.3.1` | `sha256:77e3df9054047a88b520d0cc46e16696d3b22022e1d580aeccd2632df6532837` | yes | yes |
-| Debezium Connect | `quay.io/debezium/connect:3.6.1` | `sha256:624de53c4da93aa2f845483449c7c26d0ed1f816eac06f2f476f79b3ab50abb5` | yes | yes |
+| Component | Version | amd64 | arm64 |
+|---|---|:---:|:---:|
+| PostgreSQL base/client | `postgres:16.14-bookworm` | yes | yes |
+| Patroni | `4.1.4` | yes | yes |
+| etcd | `quay.io/coreos/etcd:v3.5.33` | yes | yes |
+| HAProxy | `haproxy:3.2.22-alpine` | yes | yes |
+| Apache Kafka | `apache/kafka:4.3.1` | yes | yes |
+| Debezium Connect | `quay.io/debezium/connect:3.6.1` | yes | yes |
 
-Manifest inspection confirmed both `linux/amd64` and `linux/arm64`. Release configuration uses the listed digests; readable tags remain beside them for maintenance.
+Manifest inspection confirmed both `linux/amd64` and `linux/arm64`. Runtime and build inputs use explicit version tags so dependency automation can maintain them. Upstream publishers can repoint tags; review dependency updates and CI results before release.
 
 ## Host prerequisites
 

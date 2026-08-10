@@ -18,8 +18,8 @@ command -v docker >/dev/null 2>&1 || {
   exit 1
 }
 
-structurizr_image='structurizr/cli:2025.11.09@sha256:0399ac8e24c16e41277cfcec22caa29e4775013e5395c0720016828426d62749'
-plantuml_image='plantuml/plantuml:1.2026.6@sha256:47870c1f76cfb3747bc7090bfe83013a4e3105b5a0bb1515e2baf5d3e2b3ee9d'
+structurizr_image='structurizr/cli:2025.11.09'
+plantuml_image='plantuml/plantuml:1.2026.6'
 
 mkdir -p "$build_dir" "$output_dir"
 find "$build_dir" -mindepth 1 -maxdepth 1 -delete

@@ -8,7 +8,7 @@ Repeated OOM kills, slow Kafka startup, or promotion timeouts usually mean the V
 
 ## Architecture or image pulls
 
-Confirm the host reports `amd64` or `arm64` and compare image digests with `docs/compatibility.md`. A stale mutable tag is not part of the supported configuration.
+Confirm the host reports `amd64` or `arm64` and compare image versions with `docs/compatibility.md`. Pull the configured tags again if a local image is stale.
 
 ## Unhealthy PostgreSQL or etcd
 
