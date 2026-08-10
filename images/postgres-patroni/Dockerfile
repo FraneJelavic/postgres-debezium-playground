@@ -18,7 +18,8 @@ RUN apt-get update \
 
 COPY images/postgres-patroni/requirements.txt /tmp/requirements.txt
 RUN /opt/patroni-venv/bin/pip install --no-cache-dir --require-hashes -r /tmp/requirements.txt \
-    && rm /tmp/requirements.txt
+    && /opt/patroni-venv/bin/pip uninstall --yes setuptools \
+    && rm /tmp/requirements.txt /usr/local/bin/gosu
 
 COPY config/patroni/patroni.yml /etc/patroni/patroni.yml
 COPY images/postgres-patroni/entrypoint.sh /usr/local/bin/patroni-entrypoint

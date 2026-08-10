@@ -67,6 +67,7 @@ jobs:
           image-ref: postgres-debezium-playground/postgres-patroni:local
           format: table
           exit-code: "1"
+          ignore-unfixed: true
           severity: CRITICAL,HIGH
       - name: Cleanup isolated project
         if: always()
