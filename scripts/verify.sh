@@ -124,7 +124,7 @@ event_seen() {
 }
 
 haproxy_routes_only_to() {
-  local expected_primary=$1
+  local expected_primary=$1 writable
   compose exec -T haproxy \
     wget -qO- 'http://127.0.0.1:7000/stats;csv' 2>/dev/null \
     | awk -F, -v expected="$expected_primary" '
@@ -135,7 +135,10 @@ haproxy_routes_only_to() {
           }
         }
         END { exit !(up == 1 && expected_up == 1) }
-      '
+      ' || return 1
+
+  writable=$(sql_via_haproxy -Atc 'SELECT NOT pg_is_in_recovery();' 2>/dev/null) || return 1
+  [[ "$writable" == t ]]
 }
 
 former_member_streaming() {
