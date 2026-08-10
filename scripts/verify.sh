@@ -5,7 +5,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=scripts/lib.sh
 source "$script_dir/lib.sh"
 load_credentials
-require_commands docker curl jq openssl
+require_commands awk docker curl jq openssl
 
 verification_failed() {
   local exit_code=$?
@@ -123,6 +123,24 @@ event_seen() {
   grep -Fq "$correlation_id" <<<"$output" && grep -Fq "$marker" <<<"$output"
 }
 
+haproxy_routes_only_to() {
+  local expected_primary=$1 writable
+  compose exec -T haproxy \
+    wget -qO- 'http://127.0.0.1:7000/stats;csv' 2>/dev/null \
+    | awk -F, -v expected="$expected_primary" '
+        $1 == "postgres_primary" && $2 ~ /^postgres/ && $18 == "UP" {
+          up++
+          if ($2 == expected) {
+            expected_up++
+          }
+        }
+        END { exit !(up == 1 && expected_up == 1) }
+      ' || return 1
+
+  writable=$(sql_via_haproxy -Atc 'SELECT NOT pg_is_in_recovery();' 2>/dev/null) || return 1
+  [[ "$writable" == t ]]
+}
+
 former_member_streaming() {
   local service=$1 port recovery receiver
   port=$(patroni_port "$service")
@@ -174,6 +192,7 @@ different_primary_ready() {
 }
 wait_until 60 'promotion of a different sole primary' different_primary_ready
 new_primary=$(discover_primary)
+wait_until 60 "HAProxy to route only to $new_primary" haproxy_routes_only_to "$new_primary"
 
 post_sentinel=$(make_uuid)
 post_correlation=$(make_uuid)

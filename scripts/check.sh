@@ -45,7 +45,7 @@ compose config --format json \
     exit 1
   }
 
-mode=$(stat -f '%Lp' "${credentials_file}" 2>/dev/null || stat -c '%a' "${credentials_file}")
+mode=$(stat -c '%a' "${credentials_file}" 2>/dev/null || stat -f '%Lp' "${credentials_file}")
 [[ "${mode}" == 600 ]] || {
   printf 'Credential file mode is %s, expected 600.\n' "${mode}" >&2
   exit 1
