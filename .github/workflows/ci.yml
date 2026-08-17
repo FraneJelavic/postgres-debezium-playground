@@ -57,7 +57,7 @@ jobs:
           ./scripts/compose.sh logs --no-color > compose-logs.txt || true
       - name: Upload diagnostics
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: diagnostics-amd64
           path: compose-*.txt
