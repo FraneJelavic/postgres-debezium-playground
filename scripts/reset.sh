@@ -22,4 +22,4 @@ fi
 
 compose down --volumes --remove-orphans
 rm -f "$credentials_file"
-printf 'Reset complete. Removed project volumes and generated credentials.\n'
+printf 'Reset complete. Removed project volumes and credential file.\n'

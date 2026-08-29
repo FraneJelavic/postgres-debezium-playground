@@ -18,7 +18,7 @@ make up
 make status
 ```
 
-Initialization is idempotent. Re-running it preserves `.state/credentials.env`; resetting the lab is the explicit way to rotate local credentials.
+Initialization is idempotent. Re-running it preserves `.state/credentials.env`. If an existing setup still has randomly generated passwords from an earlier version, run `make reset`, then `make up`, to recreate the credential file and database volumes with the shared password `test`.
 
 Connect a PostgreSQL client to `127.0.0.1:5432`, database `playground`, user `postgres`, password `test`. New connections always target the current Patroni primary.
 
@@ -37,4 +37,4 @@ Consume `playground.events.orders` from `127.0.0.1:9092`. The Kafka key is the a
 
 ## Stop and reset
 
-`make down` preserves PostgreSQL, etcd, and Kafka volumes. `make reset` prints the exact project and volumes, requires confirmation, and deletes generated credentials. Reset is irreversible unless the Docker volumes were backed up separately.
+`make down` preserves PostgreSQL, etcd, and Kafka volumes. `make reset` prints the exact project and volumes, requires confirmation, and deletes the credential file. Reset is irreversible unless the Docker volumes were backed up separately.
