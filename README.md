@@ -43,20 +43,20 @@ make status
 make verify
 ```
 
-`make init` creates mode-0600 credentials in `.state/credentials.env`. `make down` preserves all named volumes. `make reset` displays and removes the project volumes and generated credentials only after explicit confirmation.
+On a fresh setup, `make init` writes development-only credentials to mode-0600 `.state/credentials.env`; all local roles use the password `test`. Existing credential files are reused. Run `make reset`, then `make up`, to replace credentials and database volumes created by an earlier version. `make down` preserves all named volumes. `make reset` displays and removes the project volumes and credential file only after explicit confirmation.
 
 ## Entry points
 
 | Command | Purpose |
 |---|---|
-| `make init` | Generate or reuse local credentials. |
+| `make init` | Write or reuse development credentials. |
 | `make up` | Build and start the complete healthy stack. |
 | `make status` | Report Compose, etcd, Patroni, HAProxy, Kafka, connector, publication, and slot state. |
 | `make verify` | Exercise replication, CDC, promotion, rejoin, and persistence. |
 | `make failover` | Stop the discovered primary, verify promotion, then restart and verify rejoin. |
 | `make logs` | Follow project logs. |
 | `make down` | Stop services without deleting volumes. |
-| `make reset` | Explicitly delete project volumes and generated credentials. |
+| `make reset` | Explicitly delete project volumes and the credential file. |
 | `make diagrams` | Rebuild the embedded C4 PNGs from the Structurizr DSL source. |
 
 ## Local endpoints
