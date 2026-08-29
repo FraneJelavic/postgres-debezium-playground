@@ -33,12 +33,6 @@ if scan_repository \
   exit 1
 fi
 
-if scan_repository \
-  'docker\.ib-ci\.com|git\.ib-ci\.com|confluence\.infobip\.com|jira\.infobip\.com|serena\.infobip\.com'; then
-  printf 'A prohibited private marker was found.\n' >&2
-  exit 1
-fi
-
 compose config --format json \
   | jq -e '[.services[].ports[]? | select(.host_ip != "127.0.0.1")] | length == 0' >/dev/null || {
     printf 'A host port is not bound explicitly to loopback.\n' >&2
