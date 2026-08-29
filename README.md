@@ -43,7 +43,7 @@ make status
 make verify
 ```
 
-`make init` creates mode-0600 credentials in `.state/credentials.env`. `make down` preserves all named volumes. `make reset` displays and removes the project volumes and generated credentials only after explicit confirmation.
+`make init` writes development-only credentials (all local roles share the password `test`) to mode-0600 `.state/credentials.env`. `make down` preserves all named volumes. `make reset` displays and removes the project volumes and generated credentials only after explicit confirmation.
 
 ## Entry points
 

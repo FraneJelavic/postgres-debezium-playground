@@ -20,7 +20,7 @@ make status
 
 Initialization is idempotent. Re-running it preserves `.state/credentials.env`; resetting the lab is the explicit way to rotate local credentials.
 
-Connect a PostgreSQL client to `127.0.0.1:5432`, database `playground`, user `postgres`, using the generated password. New connections always target the current Patroni primary.
+Connect a PostgreSQL client to `127.0.0.1:5432`, database `playground`, user `postgres`, password `test`. New connections always target the current Patroni primary.
 
 To insert a sample event, use a new UUID for both `id` and `correlation_id`:
 
