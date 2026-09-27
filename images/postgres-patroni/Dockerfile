@@ -12,6 +12,7 @@ ENV PATH="/opt/patroni-venv/bin:${PATH}" \
 # Debian security updates are intentionally consumed when the image is rebuilt.
 # hadolint ignore=DL3008
 RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends ca-certificates curl python3 python3-venv \
     && python3 -m venv /opt/patroni-venv \
     && rm -rf /var/lib/apt/lists/*
