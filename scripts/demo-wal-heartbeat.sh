@@ -51,15 +51,20 @@ wait_for_connector() {
 }
 
 put_connector_config() {
-  local config_file=$1
+  local config_file=$1 http_code
   curl --fail --silent --show-error \
     --request PUT \
     --header 'Content-Type: application/json' \
     --data-binary "@$config_file" \
     "$connect_url/config" >/dev/null
-  curl --fail --silent --show-error \
+  # Config PUT may already restart tasks; 409 means a restart is in progress.
+  http_code=$(curl --silent --output /dev/null --write-out '%{http_code}' \
     --request POST \
-    "$connect_url/restart?includeTasks=true" >/dev/null || true
+    "$connect_url/restart?includeTasks=true" || true)
+  if [[ "$http_code" != 204 && "$http_code" != 200 && "$http_code" != 409 ]]; then
+    printf 'Unexpected connector restart HTTP status: %s\n' "$http_code" >&2
+    return 1
+  fi
   wait_for_connector
 }
 
