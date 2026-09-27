@@ -35,6 +35,8 @@ VALUES
 
 Consume `playground.events.orders` from `127.0.0.1:9092`. The Kafka key is the aggregate ID; the value is the JSON payload.
 
+To see why `heartbeat.action.query` matters for logical-slot WAL retention, run `make demo-wal-heartbeat` after the stack is up. Details are in [the WAL heartbeat demo](wal-heartbeat-demo.md).
+
 ## Stop and reset
 
 `make down` preserves PostgreSQL, etcd, and Kafka volumes. `make reset` prints the exact project and volumes, requires confirmation, and deletes the credential file. Reset is irreversible unless the Docker volumes were backed up separately.
