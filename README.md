@@ -54,6 +54,7 @@ On a fresh setup, `make init` writes development-only credentials to mode-0600 `
 | `make status` | Report Compose, etcd, Patroni, HAProxy, Kafka, connector, publication, and slot state. |
 | `make verify` | Exercise replication, CDC, promotion, rejoin, and persistence. |
 | `make failover` | Stop the discovered primary, verify promotion, then restart and verify rejoin. |
+| `make demo-wal-heartbeat` | Show quiet captured tables retaining WAL, then fix it with `heartbeat.action.query`. |
 | `make logs` | Follow project logs. |
 | `make down` | Stop services without deleting volumes. |
 | `make reset` | Explicitly delete project volumes and the credential file. |
@@ -76,4 +77,4 @@ The verification workflow requires one primary, two streaming replicas, three he
 
 PostgreSQL replication is asynchronous. Existing client connections may break on promotion and must reconnect. PostgreSQL 16 logical-slot behavior in this lab is not a zero-loss guarantee.
 
-Read [Getting started](docs/getting-started.md), [the failover scenario](docs/failover-scenario.md), [the CDC flow](docs/cdc-flow.md), [security](docs/security-model.md), [limitations](docs/limitations.md), and [troubleshooting](docs/troubleshooting.md) before experimenting.
+Read [Getting started](docs/getting-started.md), [the failover scenario](docs/failover-scenario.md), [the CDC flow](docs/cdc-flow.md), [the WAL heartbeat demo](docs/wal-heartbeat-demo.md), [security](docs/security-model.md), [limitations](docs/limitations.md), and [troubleshooting](docs/troubleshooting.md) before experimenting.
