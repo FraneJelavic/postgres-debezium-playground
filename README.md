@@ -55,6 +55,7 @@ On a fresh setup, `make init` writes development-only credentials to mode-0600 `
 | `make verify` | Exercise replication, CDC, promotion, rejoin, and persistence. |
 | `make failover` | Stop the discovered primary, verify promotion, then restart and verify rejoin. |
 | `make demo-wal-heartbeat` | Show quiet captured tables retaining WAL, then fix it with `heartbeat.action.query`. |
+| `make record-wal-heartbeat` | Record a three-pane desktop video of the WAL heartbeat demo. |
 | `make logs` | Follow project logs. |
 | `make down` | Stop services without deleting volumes. |
 | `make reset` | Explicitly delete project volumes and the credential file. |
