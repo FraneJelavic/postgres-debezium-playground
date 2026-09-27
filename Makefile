@@ -1,9 +1,9 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help init up status verify failover demo-wal-heartbeat record-wal-heartbeat logs down reset check diagrams check-diagrams
+.PHONY: help init up status verify failover demo-wal-heartbeat logs down reset check diagrams check-diagrams
 
 help:
-	@printf '%s\n' 'Targets: init up status verify failover demo-wal-heartbeat record-wal-heartbeat logs down reset check diagrams check-diagrams'
+	@printf '%s\n' 'Targets: init up status verify failover demo-wal-heartbeat logs down reset check diagrams check-diagrams'
 
 init:
 	@./scripts/init.sh
@@ -22,9 +22,6 @@ failover:
 
 demo-wal-heartbeat: init
 	@./scripts/demo-wal-heartbeat.sh
-
-record-wal-heartbeat: init
-	@./scripts/launch-wal-demo-recording.sh
 
 logs:
 	@./scripts/compose.sh logs --tail=200 --follow

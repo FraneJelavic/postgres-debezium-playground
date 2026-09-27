@@ -18,24 +18,12 @@ make status
 make demo-wal-heartbeat
 ```
 
-To record a three-pane desktop video (operations / slot WAL / heartbeat row) on an X11 session:
-
-```sh
-make up
-make record-wal-heartbeat
-```
-
-`make record-wal-heartbeat` opens a maximized terminal with tmux panes, drives the config and pgbench steps in pane 1, watches `playground_slot` retained WAL in pane 2, and watches `app.debezium_heartbeat` in pane 3 while capturing the display to `wal_heartbeat_three_pane_demo.mp4` under `ARTIFACT_DIR` (default `/opt/cursor/artifacts`).
-
 Optional knobs:
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `WAL_DEMO_LOAD_SECONDS` | `45` (`20` for `record-wal-heartbeat`) | pgbench duration per phase |
+| `WAL_DEMO_LOAD_SECONDS` | `45` | pgbench duration per phase |
 | `WAL_DEMO_MIN_GROWTH_BYTES` | `5242880` | minimum retained-WAL growth required in phase 1 |
-| `ARTIFACT_DIR` | `/opt/cursor/artifacts` | output directory for `record-wal-heartbeat` |
-| `VIDEO_PATH` | `$ARTIFACT_DIR/wal_heartbeat_three_pane_demo.mp4` | recording path |
-| `DISPLAY` | `:1` | X display captured by ffmpeg |
 
 ## What the demo does
 
