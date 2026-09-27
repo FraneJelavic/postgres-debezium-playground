@@ -32,8 +32,9 @@ Optional knobs:
 3. Initializes pgbench tables in database `noise` and runs a timed load. Captured tables stay quiet.
 4. Asserts that `confirmed_flush_lsn` stalls while retained WAL for `playground_slot` grows.
 5. Restores `heartbeat.action.query` against `app.debezium_heartbeat`.
-6. Repeats the same off-publication load and asserts that the heartbeat row updates, `confirmed_flush_lsn` advances, and retained WAL growth stays well below the stalled-slot phase.
-7. Restores the original connector configuration.
+6. Repeats the same off-publication load and asserts that the heartbeat row updates and `confirmed_flush_lsn` advances.
+7. Waits after the load for `restart_lsn` to catch up so retained WAL is reclaimed — proving the slot is no longer pinning WAL without bound.
+8. Restores the original connector configuration.
 
 ## Slot metrics to watch
 

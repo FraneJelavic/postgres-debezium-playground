@@ -57,14 +57,18 @@ put_connector_config() {
     --header 'Content-Type: application/json' \
     --data-binary "@$config_file" \
     "$connect_url/config" >/dev/null
-  # Config PUT may already restart tasks; 409 means a restart is in progress.
+  # Config PUT may already restart tasks. 202/204 accept the restart; 409 means
+  # one is already in progress. Either way, wait for RUNNING afterwards.
   http_code=$(curl --silent --output /dev/null --write-out '%{http_code}' \
     --request POST \
     "$connect_url/restart?includeTasks=true" || true)
-  if [[ "$http_code" != 204 && "$http_code" != 200 && "$http_code" != 409 ]]; then
-    printf 'Unexpected connector restart HTTP status: %s\n' "$http_code" >&2
-    return 1
-  fi
+  case "$http_code" in
+    200|202|204|409) ;;
+    *)
+      printf 'Unexpected connector restart HTTP status: %s\n' "$http_code" >&2
+      return 1
+      ;;
+  esac
   wait_for_connector
 }
 
@@ -184,6 +188,14 @@ wait_for_heartbeat_row_change() {
   wait_until 60 'heartbeat row update' heartbeat_row_updated_since "$prior_updated_at"
 }
 
+retained_bytes_below() {
+  local threshold=$1
+  local metrics now
+  metrics=$(slot_metrics_json)
+  now=$(jq -r '.retained_bytes' <<<"$metrics")
+  (( now < threshold ))
+}
+
 tmp_dir=$(mktemp -d)
 trap 'rm -rf "$tmp_dir"' EXIT
 phase_config_file=$tmp_dir/phase-config.json
@@ -238,7 +250,6 @@ wait_for_heartbeat_row_change
 before_hb=$(slot_metrics_json)
 print_slot_metrics 'baseline' "$before_hb"
 confirmed_hb_before=$(jq -r '.confirmed_flush_lsn' <<<"$before_hb")
-retained_hb_before=$(jq -r '.retained_bytes' <<<"$before_hb")
 heartbeat_at=$(sql_via_haproxy -Atc \
   "SELECT updated_at::text FROM app.debezium_heartbeat WHERE id = 1;")
 
@@ -249,13 +260,12 @@ after_hb=$(slot_metrics_json)
 print_slot_metrics 'after pgbench + heartbeats' "$after_hb"
 confirmed_hb_after=$(jq -r '.confirmed_flush_lsn' <<<"$after_hb")
 retained_hb_after=$(jq -r '.retained_bytes' <<<"$after_hb")
-growth_hb=$((retained_hb_after - retained_hb_before))
 heartbeat_after=$(sql_via_haproxy -Atc \
   "SELECT updated_at::text FROM app.debezium_heartbeat WHERE id = 1;")
 
 printf 'confirmed_flush_lsn before=%s after=%s\n' "$confirmed_hb_before" "$confirmed_hb_after"
 printf 'heartbeat.updated_at before=%s after=%s\n' "$heartbeat_at" "$heartbeat_after"
-printf 'retained_bytes delta with source heartbeat: %s bytes\n' "$growth_hb"
+printf 'retained_bytes after load with source heartbeat: %s\n' "$retained_hb_after"
 
 if [[ "$confirmed_hb_after" == "$confirmed_hb_before" ]]; then
   printf 'Expected confirmed_flush_lsn to advance after enabling heartbeat.action.query.\n' >&2
@@ -265,14 +275,23 @@ if [[ "$heartbeat_after" == "$heartbeat_at" ]]; then
   printf 'Expected app.debezium_heartbeat.updated_at to change.\n' >&2
   exit 1
 fi
-# With a source heartbeat the slot should not retain nearly as much of the load.
-# Allow some decoding lag, but require a clear improvement versus phase 1 growth.
-if (( growth_hb * 2 >= growth_no_hb )); then
-  printf 'Expected retained WAL growth with heartbeat (%s) to be well below phase 1 (%s).\n' \
-    "$growth_hb" "$growth_no_hb" >&2
-  exit 1
+
+# restart_lsn can lag while writes are in flight. After traffic stops, heartbeats
+# should let PostgreSQL release decoding requirements and reclaim retained WAL.
+reclaim_target=$((retained_hb_after - min_growth_bytes))
+if (( reclaim_target < 0 )); then
+  reclaim_target=0
 fi
-printf 'Phase 2 OK: heartbeat row moved, confirmed_flush_lsn advanced, retained WAL stayed bounded.\n'
+printf 'Waiting for retained WAL to fall below %s bytes as restart_lsn catches up...\n' \
+  "$reclaim_target"
+wait_until 180 'retained WAL reclaim after source heartbeats' \
+  retained_bytes_below "$reclaim_target"
+settled_hb=$(slot_metrics_json)
+print_slot_metrics 'after heartbeat settle' "$settled_hb"
+settled_retained=$(jq -r '.retained_bytes' <<<"$settled_hb")
+printf 'retained_bytes reclaimed from %s to %s (phase 1 growth was %s)\n' \
+  "$retained_hb_after" "$settled_retained" "$growth_no_hb"
+printf 'Phase 2 OK: heartbeat row moved, confirmed_flush_lsn advanced, retained WAL reclaimed.\n'
 
 printf '\n=== Restoring original connector configuration ===\n'
 restore_connector_config
@@ -280,4 +299,4 @@ printf '\nDemo complete.\n'
 printf 'Without heartbeat.action.query, quiet captured tables left retained WAL growing'
 printf ' while confirmed_flush_lsn stayed at %s.\n' "$confirmed_before"
 printf 'With heartbeat.action.query, the same off-publication pgbench load advanced the slot'
-printf ' and kept retained WAL from accumulating without bound.\n'
+printf ' and retained WAL was reclaimed after restart_lsn caught up.\n'
