@@ -43,6 +43,8 @@ make status
 make verify
 ```
 
+To skip local setup, start the [iximiuz Labs playground](https://labs.iximiuz.com/playgrounds/postgres-debezium-playground-5dc0616d) instead. It runs the same stack, already healthy, on a disposable 4 vCPU / 8 GiB VM, which needs a paid iximiuz Labs plan. See [the iximiuz playground guide](docs/iximiuz-playground.md) for how it is built and published.
+
 On a fresh setup, `make init` writes development-only credentials to mode-0600 `.state/credentials.env`; all local roles use the password `test`. Existing credential files are reused. Run `make reset`, then `make up`, to replace credentials and database volumes created by an earlier version. `make down` preserves all named volumes. `make reset` displays and removes the project volumes and credential file only after explicit confirmation.
 
 ## Entry points
